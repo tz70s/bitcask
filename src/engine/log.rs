@@ -12,8 +12,8 @@ struct Record<V> {
 }
 
 impl<'d, V: 'd> Record<V>
-    where
-        V: Serialize + Deserialize<'d>,
+where
+    V: Serialize + Deserialize<'d>,
 {
     /// Create a new record.
     fn new(key: String, val: V) -> Self {

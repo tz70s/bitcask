@@ -3,7 +3,8 @@
 
 use slog::{error, info};
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), failure::Error> {
     let logger = bitcask::logger::Logger::new();
     info!(logger.log, "Start bitcask server");
 
@@ -12,9 +13,13 @@ fn main() {
         Ok(c) => c,
         Err(e) => {
             error!(logger.log, "Can't load bitcask configuration, please check again"; "error" => e.to_string());
-            return;
+            return Err(e);
         }
     };
 
-    info!(logger.log, "Bitcask configurations"; "host" => config.host, "port" => config.port);
+    info!(logger.log, "Bitcask configurations"; "host" => &config.host, "port" => &config.port);
+
+    bitcask::server::run(logger, config).await?;
+
+    Ok(())
 }

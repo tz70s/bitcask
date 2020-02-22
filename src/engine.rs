@@ -5,19 +5,25 @@ use crate::engine::memtable::MemTable;
 mod disk;
 mod log;
 mod memtable;
+use futures::lock::Mutex;
+use std::sync::Arc;
 
 /// Engine is the core storage engine which operates fully asynchronous.
 /// Including the file system based on tokio and few futures based synchronization primitives.
-struct Engine {
+pub struct Engine {
     // include a memory table, should be protected via Arc & Mutext async version.
-    memtable: memtable::MemTable,
+    memtable: Arc<Mutex<memtable::MemTable>>,
     // disk writes
 }
 
 impl Engine {
-    fn new() -> Self {
-        Engine {
-            memtable: MemTable::new(),
-        }
+    pub fn new() -> Self {
+        let memtable = MemTable::new();
+
+        let locked = Arc::new(Mutex::new(memtable));
+
+        Engine { memtable: locked }
     }
+
+    // In this layer we should expose four apis as well: get, set, list, rm.
 }

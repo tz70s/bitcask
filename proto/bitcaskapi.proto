@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package bitcaskapi;
+
+service Bitcasker {
+    rpc Get (GetRequest) returns (GetReply);
+    rpc Set (SetRequest) returns (SetReply);
+    rpc List (ListRequest) returns (ListReply);
+    rpc Del (DelRequest) returns (DelReply);
+}
+
+// Status code from reply.
+enum Status {
+    // Http 200
+    OK = 0;
+
+    // Http 404
+    NotFound = 1;
+
+    // Http 500
+    InternalServerError = 2;
+
+    // Http 503
+    ServiceUnavailable = 3;
+}
+
+message GetRequest {
+    string key = 1;
+}
+
+message GetReply {
+    Entry entry = 1;
+}
+
+message SetRequest {
+    Entry entry = 1;
+}
+
+message SetReply {
+}
+
+message ListRequest {
+}
+
+message ListReply {
+    repeated Entry entry = 1;
+}
+
+message DelRequest {
+    string key = 1;
+}
+
+message DelReply {
+}
+
+message Entry {
+    string key = 1;
+    string val = 2;
+}
+

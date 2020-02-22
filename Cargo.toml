@@ -5,10 +5,17 @@ authors = ["Tzu-Chiao Yeh <su3g4284zo6y7@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-failure = "*"
-slog = "*"
+failure = "0.1.6"
+slog = "2.5"
 slog-term = "*"
 slog-async = "*"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+tonic = "0.1.1"
+prost = "0.6.1"
+tokio = { version = "0.2", features = ["macros"] }
+futures = "*"
+
+[build-dependencies]
+tonic-build = "0.1.1"
 
