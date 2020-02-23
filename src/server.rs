@@ -10,7 +10,7 @@ use bitcaskapi::{
 use super::engine;
 use super::logger;
 use super::Config;
-use slog::{debug, info};
+use slog::debug;
 
 pub mod bitcaskapi {
     tonic::include_proto!("bitcaskapi");
@@ -44,7 +44,7 @@ pub async fn run(logger: logger::Logger, config: Config) -> Result<(), failure::
 #[tonic::async_trait]
 impl Bitcasker for BitcaskServer {
     async fn get(&self, request: Request<GetRequest>) -> Result<Response<GetReply>, Status> {
-        info!(self.logger.log, "Got incoming request"; "method" => "get", "request" => format!("{:?}", request));
+        debug!(self.logger.log, "Got incoming request"; "method" => "get", "request" => ?request);
 
         let key = request.into_inner().key;
 
@@ -59,7 +59,7 @@ impl Bitcasker for BitcaskServer {
     }
 
     async fn set(&self, request: Request<SetRequest>) -> Result<Response<SetReply>, Status> {
-        info!(self.logger.log, "Got get request from client {:?}", request);
+        debug!(self.logger.log, "Got incoming request"; "method" => "set", "request" => ?request);
         let entry = request.into_inner().entry;
         let reply = bitcaskapi::SetReply {};
 
@@ -67,17 +67,14 @@ impl Bitcasker for BitcaskServer {
     }
 
     async fn list(&self, request: Request<ListRequest>) -> Result<Response<ListReply>, Status> {
-        info!(
-            self.logger.log,
-            "Got list request from client {:?}", request
-        );
+        debug!(self.logger.log, "Got incoming request"; "method" => "list", "request" => ?request);
         let reply = bitcaskapi::ListReply { entry: vec![] };
 
         Ok(Response::new(reply))
     }
 
     async fn del(&self, request: Request<DelRequest>) -> Result<Response<DelReply>, Status> {
-        info!(self.logger.log, "Got del request from client {:?}", request);
+        debug!(self.logger.log, "Got incoming request"; "method" => "del", "request" => ?request);
         let key = request.into_inner().key;
 
         let reply = bitcaskapi::DelReply {};

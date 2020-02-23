@@ -6,13 +6,13 @@ use slog::{error, info};
 #[tokio::main]
 async fn main() -> Result<(), failure::Error> {
     let logger = bitcask::logger::Logger::new();
-    info!(logger.log, "Start bitcask server");
+    info!(logger.log, "Initialize environment for bitcask server");
 
     // load config
     let config = match bitcask::Config::file("conf/default.json") {
         Ok(c) => c,
         Err(e) => {
-            error!(logger.log, "Can't load bitcask configuration, please check again"; "error" => e.to_string());
+            error!(logger.log, "Can't load bitcask configuration, please check again"; "error" => %e);
             return Err(e);
         }
     };
