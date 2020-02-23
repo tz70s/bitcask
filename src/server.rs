@@ -47,6 +47,7 @@ impl Bitcasker for BitcaskServer {
         info!(self.logger.log, "Got incoming request"; "method" => "get", "request" => format!("{:?}", request));
 
         let key = request.into_inner().key;
+
         let reply = bitcaskapi::GetReply {
             entry: Some(bitcaskapi::Entry {
                 key,

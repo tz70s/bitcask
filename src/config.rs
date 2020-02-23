@@ -1,18 +1,7 @@
 //! Configurations for bitcask.
 
-use failure::Fail;
 use serde::{Deserialize, Serialize};
-use std::io::Read;
 use std::path::Path;
-
-#[derive(Debug, Fail)]
-enum ConfigError {
-    #[fail(display = "file {} not found", name)]
-    FileNotFound { name: String },
-
-    #[fail(display = "malformed format while deserializing json")]
-    MalformedFormat,
-}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Config {

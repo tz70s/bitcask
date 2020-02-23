@@ -10,6 +10,8 @@ use std::sync::Arc;
 
 /// Engine is the core storage engine which operates fully asynchronous.
 /// Including the file system based on tokio and few futures based synchronization primitives.
+///
+/// It's intended to be thread-safe.
 pub struct Engine {
     // include a memory table, should be protected via Arc & Mutext async version.
     memtable: Arc<Mutex<memtable::MemTable>>,
