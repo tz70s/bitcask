@@ -2,8 +2,9 @@
 
 use tonic::{transport::Server, Request, Response, Status};
 
-use bitcaskapi::bitcasker_server::{Bitcasker, BitcaskerServer};
-use bitcaskapi::{
+use crate::proto::bitcaskapi::{
+    self,
+    bitcasker_server::{Bitcasker, BitcaskerServer},
     DelReply, DelRequest, GetReply, GetRequest, ListReply, ListRequest, SetReply, SetRequest,
 };
 
@@ -12,27 +13,21 @@ use super::logger;
 use super::Config;
 use slog::debug;
 
-pub mod bitcaskapi {
-    tonic::include_proto!("bitcaskapi");
-}
-
 pub struct BitcaskServer {
     logger: logger::Logger,
     engine: engine::Engine,
 }
 
 impl BitcaskServer {
-    pub fn new(logger: logger::Logger) -> BitcaskServer {
-        BitcaskServer {
-            logger,
-            engine: engine::Engine::new(),
-        }
+    pub async fn new(logger: logger::Logger) -> BitcaskServer {
+        let engine = engine::Engine::new().await;
+        BitcaskServer { logger, engine }
     }
 }
 
 pub async fn run(logger: logger::Logger, config: Config) -> Result<(), failure::Error> {
     let addr = format!("{}:{}", config.host, config.port).parse()?;
-    let server = BitcaskServer::new(logger);
+    let server = BitcaskServer::new(logger).await;
 
     Server::builder()
         .add_service(BitcaskerServer::new(server))
@@ -48,19 +43,36 @@ impl Bitcasker for BitcaskServer {
 
         let key = request.into_inner().key;
 
-        let reply = bitcaskapi::GetReply {
-            entry: Some(bitcaskapi::Entry {
-                key,
-                val: "456".to_string(),
-            }),
+        let record = match self.engine.get(&key).await {
+            Ok(record) => record,
+            Err(e) => return Err(Status::internal(e.to_string())),
         };
+
+        let entry = record.map(|record| bitcaskapi::Entry {
+            key: record.key,
+            val: record.val,
+        });
+
+        debug!(self.logger.log, "Query entry result"; "key" => key, "entry" => ?entry);
+
+        let reply = bitcaskapi::GetReply { entry };
 
         Ok(Response::new(reply))
     }
 
     async fn set(&self, request: Request<SetRequest>) -> Result<Response<SetReply>, Status> {
         debug!(self.logger.log, "Got incoming request"; "method" => "set", "request" => ?request);
-        let entry = request.into_inner().entry;
+        let entry = if let Some(entry) = request.into_inner().entry {
+            entry
+        } else {
+            return Err(Status::invalid_argument("should pass entry value for set"));
+        };
+
+        self.engine
+            .set(entry.key, entry.val)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?;
+
         let reply = bitcaskapi::SetReply {};
 
         Ok(Response::new(reply))

@@ -1,12 +1,12 @@
 //! Key -> Log Offset
 
-use super::log::Offset;
+use super::log::Meta;
 use std::collections::HashMap;
 
 /// Store key -> log offset
 #[derive(Debug)]
 pub struct MemTable {
-    indexes: HashMap<String, Offset>,
+    indexes: HashMap<String, Meta>,
 }
 
 impl MemTable {
@@ -19,12 +19,12 @@ impl MemTable {
 
     /// Set insert or update a key and offset pair.
     /// We don't need to distinguish two differences.
-    pub fn set(&mut self, key: String, offset: Offset) {
-        self.indexes.insert(key, offset);
+    pub fn set(&mut self, key: String, meta: Meta) {
+        self.indexes.insert(key, meta);
     }
 
     /// Get get the associated offset from given key.
-    pub fn get(&self, key: &str) -> Option<&Offset> {
+    pub fn get(&self, key: &str) -> Option<&Meta> {
         self.indexes.get(key)
     }
 

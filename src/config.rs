@@ -43,7 +43,7 @@ mod tests {
 
     #[test]
     fn test_config_loading() {
-        let c0 = "{\"host\": \"127.0.0.1\", \"port\": 1222}";
+        let c0 = r#"{"host": "127.0.0.1", "port": 1222}"#;
         let c = Config::from_str(c0).expect("should success deserialize correct json format");
         assert_eq!(
             Config {
@@ -54,7 +54,7 @@ mod tests {
         );
 
         // fallback using default
-        let c1 = "{\"port\": 1222}";
+        let c1 = r#"{"port": 1222}"#;
         let c = Config::from_str(c1).expect("should success deserialize partial json content");
         assert_eq!(
             Config {
