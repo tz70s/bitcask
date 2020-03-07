@@ -1,13 +1,12 @@
 //! Key -> Log Offset
 
 use super::log::Meta;
-use std::collections::HashMap;
+use std::collections::{HashMap, hash_map};
 
 /// Store key -> log offset
 #[derive(Debug)]
 pub struct MemTable {
-    // TODO: remove this pub and implement iterator for memtable.
-    pub indexes: HashMap<String, Meta>,
+    indexes: HashMap<String, Meta>,
 }
 
 impl MemTable {
@@ -32,5 +31,10 @@ impl MemTable {
     /// Remove a key and associated offset.
     pub fn rm(&mut self, key: &str) {
         self.indexes.remove(key);
+    }
+
+    /// Pass out the internal iterator for list API.
+    pub fn iter(&self) -> hash_map::Iter<'_, String, Meta> {
+        self.indexes.iter()
     }
 }

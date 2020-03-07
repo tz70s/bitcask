@@ -16,8 +16,9 @@ use std::sync::Arc;
 ///
 /// It's intended to be thread-safe.
 pub struct Engine {
-    // include a memory table, should be protected via Arc & Mutext async version.
-    // TODO: push down mutext to internal module, and make memtable async.
+    // include a memory table, should be protected via Arc & Mutex async version.
+    // TODO: push down mutex to internal module, and make memtable async.
+    // It's quite strange it's hard to achieve.
     memtable: Arc<Mutex<memtable::MemTable>>,
 
     // disk reads and writes
@@ -80,7 +81,7 @@ impl Engine {
 
         let mut records = vec![];
 
-        for (k, meta) in inner.indexes.iter() {
+        for (_, meta) in inner.iter() {
             // To do so, we terminate the iteration when any of error occurred.
             // Should open up to further making progress?
             let repr = self.storage.pread(meta.offset, meta.size).await?;

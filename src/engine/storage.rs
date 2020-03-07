@@ -40,7 +40,7 @@ impl Storage {
         guard_file.seek(std::io::SeekFrom::Start(offset)).await?;
 
         // NOTICE: there's a strange behavior if you use read or read_exact for reading.
-        // Those methods can only work with fixed size byte array.
+        // Those methods can only work with certain condition with slice array.
         guard_file.read_buf(&mut bytes).await?;
 
         let repr = log::Repr::new(bytes.freeze());
