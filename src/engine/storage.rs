@@ -8,7 +8,6 @@ use futures::lock::Mutex;
 use tokio::{fs, prelude::*};
 
 pub struct Storage {
-    // TODO: replace to async mutex.
     file: Arc<Mutex<fs::File>>,
 }
 
@@ -58,6 +57,7 @@ impl Storage {
 
         guard_file.write(&data).await?;
 
+        // TODO: check if only sync_data is safe here (do we need to sync metadata in every calls?)
         guard_file.sync_data().await?;
 
         Ok(end)
