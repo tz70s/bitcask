@@ -80,7 +80,22 @@ impl Bitcasker for BitcaskServer {
 
     async fn list(&self, request: Request<ListRequest>) -> Result<Response<ListReply>, Status> {
         debug!(self.logger.log, "Got incoming request"; "method" => "list", "request" => ?request);
-        let reply = bitcaskapi::ListReply { entry: vec![] };
+
+        let records = self
+            .engine
+            .list()
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?;
+
+        let entry = records
+            .into_iter()
+            .map(|r| bitcaskapi::Entry {
+                key: r.key,
+                val: r.val,
+            })
+            .collect();
+
+        let reply = bitcaskapi::ListReply { entry };
 
         Ok(Response::new(reply))
     }
@@ -89,6 +104,10 @@ impl Bitcasker for BitcaskServer {
         debug!(self.logger.log, "Got incoming request"; "method" => "del", "request" => ?request);
         let key = request.into_inner().key;
 
+        self.engine
+            .rm(&key)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?;
         let reply = bitcaskapi::DelReply {};
 
         Ok(Response::new(reply))

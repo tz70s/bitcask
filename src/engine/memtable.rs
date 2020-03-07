@@ -6,7 +6,8 @@ use std::collections::HashMap;
 /// Store key -> log offset
 #[derive(Debug)]
 pub struct MemTable {
-    indexes: HashMap<String, Meta>,
+    // TODO: remove this pub and implement iterator for memtable.
+    pub indexes: HashMap<String, Meta>,
 }
 
 impl MemTable {

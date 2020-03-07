@@ -50,7 +50,7 @@ impl Engine {
                 let record = Record::from_repr(repr)?;
                 Some(record)
             }
-            None => None
+            None => None,
         };
 
         Ok(record)
@@ -61,7 +61,7 @@ impl Engine {
         // TODO: eliminate this clone.
         let key_clone = key.clone();
         let record = Record::new(key, val);
-        let bytes =  record.to_bytes()?;
+        let bytes = record.to_bytes()?;
         let size = bytes.len();
 
         // TODO: we shouldn't rely on the size before write (should be after write).
@@ -74,12 +74,25 @@ impl Engine {
     }
 
     // List all records asynchronously.
-    // TODO: we can actually try to adapt this wit
-    async fn list(&self) -> Result<Option<Vec<Record>>, Error> {
-        unimplemented!();
+    // TODO: use stream is much better, but need to change the grpc interface as well.
+    pub async fn list(&self) -> Result<Vec<Record>, Error> {
+        let inner = self.memtable.lock().await;
+
+        let mut records = vec![];
+
+        for (k, meta) in inner.indexes.iter() {
+            // To do so, we terminate the iteration when any of error occurred.
+            // Should open up to further making progress?
+            let repr = self.storage.pread(meta.offset, meta.size).await?;
+            let record = Record::from_repr(repr)?;
+            records.push(record)
+        }
+        Ok(records)
     }
 
-    async fn rm(&self, key: String) -> Result<(), Error> {
-        unimplemented!();
+    pub async fn rm(&self, key: &str) -> Result<(), Error> {
+        let mut inner = self.memtable.lock().await;
+        inner.rm(key);
+        Ok(())
     }
 }
