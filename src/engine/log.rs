@@ -32,15 +32,18 @@ impl Repr {
 
 /// Single entry of recording log.
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct Record {
-    pub key: String,
+pub struct Record<'k> {
+    pub key: std::borrow::Cow<'k, str>,
     pub val: String,
 }
 
-impl Record {
+impl<'k> Record<'k> {
     /// Create a new record.
-    pub fn new(key: String, val: String) -> Self {
-        Record { key, val }
+    pub fn new(key: &'k str, val: String) -> Self {
+        Record {
+            key: std::borrow::Cow::from(key),
+            val,
+        }
     }
 
     pub fn to_bytes(&self) -> Result<Bytes, Error> {
@@ -49,7 +52,7 @@ impl Record {
         Ok(bytes)
     }
 
-    pub fn from_repr(repr: Repr) -> Result<Record, Error> {
+    pub fn from_repr(repr: Repr) -> Result<Record<'static>, Error> {
         serde_json::from_slice(&repr.bs[..]).map_err(|e| e.into())
     }
 
@@ -70,7 +73,7 @@ mod tests {
 
     #[test]
     fn test_record_serialization() {
-        let record = Record::new(String::from("key0"), String::from("val0"));
+        let record = Record::new("key0", String::from("val0"));
         let result = record.to_string().expect("should serialize to string");
         assert_eq!(result, "{\"key\":\"key0\",\"val\":\"val0\"}")
     }
@@ -81,6 +84,6 @@ mod tests {
 
         let record = Record::from_str(raw).expect("should deserialize from string");
 
-        assert_eq!(record, Record::new("key0".to_string(), "12".to_string()));
+        assert_eq!(record, Record::new("key0", "12".to_string()));
     }
 }

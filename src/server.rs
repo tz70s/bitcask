@@ -49,7 +49,7 @@ impl Bitcasker for BitcaskServer {
         };
 
         let entry = record.map(|record| bitcaskapi::Entry {
-            key: record.key,
+            key: record.key.into_owned(),
             val: record.val,
         });
 
@@ -90,7 +90,7 @@ impl Bitcasker for BitcaskServer {
         let entry = records
             .into_iter()
             .map(|r| bitcaskapi::Entry {
-                key: r.key,
+                key: r.key.into_owned(),
                 val: r.val,
             })
             .collect();

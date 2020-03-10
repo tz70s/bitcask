@@ -16,9 +16,10 @@ use std::sync::Arc;
 ///
 /// It's intended to be thread-safe.
 pub struct Engine {
-    // include a memory table, should be protected via Arc & Mutex async version.
-    // TODO: push down mutex to internal module, and make memtable async.
-    // It's quite strange it's hard to achieve.
+    // Include a memory table, should be protected via Arc & Mutex async version.
+    // We couldn't push down the Mutex to memtable due to the reference carrying out
+    // &Meta and HashMap iterator would break out the Mutex guarantee.
+    // Therefore we need to use the Mutex here.
     memtable: Arc<Mutex<memtable::MemTable>>,
 
     // disk reads and writes
@@ -40,7 +41,7 @@ impl Engine {
     }
 
     // Get record from given key, asynchronously.
-    pub async fn get(&self, key: &str) -> Result<Option<Record>, Error> {
+    pub async fn get(&self, key: &str) -> Result<Option<Record<'static>>, Error> {
         // Get the file offset first.
         let inner = self.memtable.lock().await;
         let meta = inner.get(&key);
@@ -59,9 +60,7 @@ impl Engine {
 
     // Set record from given key and value, asynchronously.
     pub async fn set(&self, key: String, val: String) -> Result<(), Error> {
-        // TODO: eliminate this clone.
-        let key_clone = key.clone();
-        let record = Record::new(key, val);
+        let record = Record::new(&key, val);
         let bytes = record.to_bytes()?;
         let size = bytes.len();
 
@@ -70,13 +69,13 @@ impl Engine {
 
         let meta = log::Meta { offset, size };
         let mut inner = self.memtable.lock().await;
-        inner.set(key_clone, meta);
+        inner.set(key, meta);
         Ok(())
     }
 
     // List all records asynchronously.
     // TODO: use stream is much better, but need to change the grpc interface as well.
-    pub async fn list(&self) -> Result<Vec<Record>, Error> {
+    pub async fn list(&self) -> Result<Vec<Record<'static>>, Error> {
         let inner = self.memtable.lock().await;
 
         let mut records = vec![];
