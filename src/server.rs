@@ -11,6 +11,9 @@ use crate::proto::bitcaskapi::{
 use super::engine;
 use super::logger;
 use super::Config;
+use failure::_core::pin::Pin;
+use futures::stream::BoxStream;
+use futures::Stream;
 use slog::debug;
 
 pub struct BitcaskServer {
@@ -78,7 +81,13 @@ impl Bitcasker for BitcaskServer {
         Ok(Response::new(reply))
     }
 
-    async fn list(&self, request: Request<ListRequest>) -> Result<Response<ListReply>, Status> {
+    type ListStream =
+        Pin<Box<dyn Stream<Item = Result<ListReply, Status>> + Send + Sync + 'static>>;
+
+    async fn list(
+        &self,
+        request: Request<ListRequest>,
+    ) -> Result<Response<Self::ListStream>, Status> {
         debug!(self.logger.log, "Got incoming request"; "method" => "list", "request" => ?request);
 
         let records = self
@@ -87,17 +96,17 @@ impl Bitcasker for BitcaskServer {
             .await
             .map_err(|e| Status::internal(e.to_string()))?;
 
-        let entry = records
-            .into_iter()
-            .map(|r| bitcaskapi::Entry {
+        let entries = records.into_iter().map(|r| {
+            let e = bitcaskapi::Entry {
                 key: r.key.into_owned(),
                 val: r.val,
-            })
-            .collect();
+            };
+            Ok(ListReply { entry: Some(e) })
+        });
 
-        let reply = bitcaskapi::ListReply { entry };
+        let reply = futures::stream::iter(entries);
 
-        Ok(Response::new(reply))
+        Ok(Response::new(Box::pin(reply)))
     }
 
     async fn del(&self, request: Request<DelRequest>) -> Result<Response<DelReply>, Status> {

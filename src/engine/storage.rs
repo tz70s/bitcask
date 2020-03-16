@@ -3,8 +3,8 @@
 use super::log;
 use bytes::{Bytes, BytesMut};
 use failure::Error;
-use std::sync::Arc;
 use futures::lock::Mutex;
+use std::sync::Arc;
 use tokio::{fs, prelude::*};
 
 pub struct Storage {

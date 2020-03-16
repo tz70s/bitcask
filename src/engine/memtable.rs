@@ -1,7 +1,7 @@
 //! Key -> Log Offset
 
 use super::log::Meta;
-use std::collections::{HashMap, hash_map};
+use std::collections::{hash_map, HashMap};
 
 /// Store key -> log offset
 #[derive(Debug)]

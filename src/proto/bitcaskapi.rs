@@ -19,8 +19,8 @@ pub struct SetReply {}
 pub struct ListRequest {}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListReply {
-    #[prost(message, repeated, tag = "1")]
-    pub entry: ::std::vec::Vec<Entry>,
+    #[prost(message, optional, tag = "1")]
+    pub entry: ::std::option::Option<Entry>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DelRequest {
@@ -113,7 +113,8 @@ pub mod bitcasker_client {
         pub async fn list(
             &mut self,
             request: impl tonic::IntoRequest<super::ListRequest>,
-        ) -> Result<tonic::Response<super::ListReply>, tonic::Status> {
+        ) -> Result<tonic::Response<tonic::codec::Streaming<super::ListReply>>, tonic::Status>
+        {
             self.inner.ready().await.map_err(|e| {
                 tonic::Status::new(
                     tonic::Code::Unknown,
@@ -122,7 +123,9 @@ pub mod bitcasker_client {
             })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static("/bitcaskapi.Bitcasker/List");
-            self.inner.unary(request.into_request(), path, codec).await
+            self.inner
+                .server_streaming(request.into_request(), path, codec)
+                .await
         }
         pub async fn del(
             &mut self,
@@ -162,10 +165,15 @@ pub mod bitcasker_server {
             &self,
             request: tonic::Request<super::SetRequest>,
         ) -> Result<tonic::Response<super::SetReply>, tonic::Status>;
+        #[doc = "Server streaming response type for the List method."]
+        type ListStream: Stream<Item = Result<super::ListReply, tonic::Status>>
+            + Send
+            + Sync
+            + 'static;
         async fn list(
             &self,
             request: tonic::Request<super::ListRequest>,
-        ) -> Result<tonic::Response<super::ListReply>, tonic::Status>;
+        ) -> Result<tonic::Response<Self::ListStream>, tonic::Status>;
         async fn del(
             &self,
             request: tonic::Request<super::DelRequest>,
@@ -261,9 +269,11 @@ pub mod bitcasker_server {
                 }
                 "/bitcaskapi.Bitcasker/List" => {
                     struct ListSvc<T: Bitcasker>(pub Arc<T>);
-                    impl<T: Bitcasker> tonic::server::UnaryService<super::ListRequest> for ListSvc<T> {
+                    impl<T: Bitcasker> tonic::server::ServerStreamingService<super::ListRequest> for ListSvc<T> {
                         type Response = super::ListReply;
-                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        type ResponseStream = T::ListStream;
+                        type Future =
+                            BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::ListRequest>,
@@ -275,7 +285,7 @@ pub mod bitcasker_server {
                     }
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let interceptor = inner.1.clone();
+                        let interceptor = inner.1;
                         let inner = inner.0;
                         let method = ListSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
@@ -284,7 +294,7 @@ pub mod bitcasker_server {
                         } else {
                             tonic::server::Grpc::new(codec)
                         };
-                        let res = grpc.unary(method, req).await;
+                        let res = grpc.server_streaming(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)

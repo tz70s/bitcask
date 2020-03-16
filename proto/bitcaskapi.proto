@@ -5,7 +5,7 @@ package bitcaskapi;
 service Bitcasker {
     rpc Get (GetRequest) returns (GetReply);
     rpc Set (SetRequest) returns (SetReply);
-    rpc List (ListRequest) returns (ListReply);
+    rpc List (ListRequest) returns (stream ListReply);
     rpc Del (DelRequest) returns (DelReply);
 }
 
@@ -43,7 +43,7 @@ message ListRequest {
 }
 
 message ListReply {
-    repeated Entry entry = 1;
+    Entry entry = 1;
 }
 
 message DelRequest {
