@@ -11,7 +11,7 @@ use crate::proto::bitcaskapi::{
 use super::engine;
 use super::logger;
 use super::Config;
-use futures::Stream;
+use futures::prelude::*;
 use slog::debug;
 use std::pin::Pin;
 
@@ -34,8 +34,8 @@ pub async fn run(logger: logger::Logger, config: Config) -> Result<(), failure::
     Server::builder()
         .add_service(BitcaskerServer::new(server))
         .serve(addr)
+        .err_into()
         .await
-        .map_err(|e| e.into())
 }
 
 #[tonic::async_trait]

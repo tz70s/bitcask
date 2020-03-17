@@ -50,7 +50,6 @@ impl Storage {
 
     /// Write to the end of file.
     pub async fn append(&self, data: Bytes) -> Result<log::Offset, Error> {
-        // TODO: is there any ways to get the offset and write to end in one call?
         let mut guard_file = self.file.lock().await;
 
         let end = guard_file.seek(std::io::SeekFrom::End(0)).await?;
