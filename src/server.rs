@@ -11,10 +11,9 @@ use crate::proto::bitcaskapi::{
 use super::engine;
 use super::logger;
 use super::Config;
-use failure::_core::pin::Pin;
-use futures::stream::BoxStream;
 use futures::Stream;
 use slog::debug;
+use std::pin::Pin;
 
 pub struct BitcaskServer {
     logger: logger::Logger,
